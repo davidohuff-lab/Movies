@@ -30,6 +30,7 @@ function extractIfcMetadata(payload: string, sourceUrl: string) {
   const detailMatches = Array.from(payload.matchAll(/<li><strong>([^<]+)<\/strong>\s*([\s\S]*?)<\/li>/g));
   const details = new Map(detailMatches.map((match) => [match[1].trim().toLowerCase(), collapseWhitespace(stripHtml(match[2]))]));
   const title = collapseWhitespace(stripHtml(payload.match(/<h1 class="title">([\s\S]*?)<\/h1>/)?.[1] ?? ""));
+  const posterMatch = payload.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
   const synopsis =
     collapseWhitespace(stripHtml(payload.match(/SHOWTIMES AT IFC CENTER<\/h2>[\s\S]*?<p>([\s\S]*?)<\/p>/)?.[1] ?? "")) ||
     collapseWhitespace(payload.match(/<meta name="description" content="([^"]+)"/)?.[1] ?? "");
@@ -43,9 +44,41 @@ function extractIfcMetadata(payload: string, sourceUrl: string) {
     countries: details.get("country") ? details.get("country")!.split(",").map((item) => item.trim()) : [],
     languages: details.get("language") ? details.get("language")!.split(",").map((item) => item.trim()) : [],
     synopsis: synopsis || undefined,
-    posterUrl: payload.match(/<meta property="og:image" content="([^"]+)"/)?.[1],
+    posterUrl: posterMatch ? toAbsoluteUrl(posterMatch, IFC_HOME_URL) : undefined,
     metadataSourceIds: { ifc: sourceUrl }
   };
+}
+
+function isIfcWidgetPlaceholder(description: string) {
+  return /listed on ifc center's home showtimes widget\.?/i.test(collapseWhitespace(description));
+}
+
+function mergeIfcHomeScreeningsWithFilmMetadata(
+  homeScreenings: ReturnType<typeof parseIfcHomeWidgetHtml>,
+  metadataByUrl: Map<string, ReturnType<typeof extractIfcMetadata>>
+) {
+  return homeScreenings.map((draft) => {
+    const metadata = metadataByUrl.get(draft.sourceUrl);
+    if (!metadata) {
+      return draft;
+    }
+
+    return {
+      ...draft,
+      description: isIfcWidgetPlaceholder(draft.description) ? metadata.synopsis ?? draft.description : draft.description,
+      film: {
+        canonicalTitle: metadata.canonicalTitle || draft.title,
+        releaseYear: metadata.releaseYear,
+        runtimeMinutes: metadata.runtimeMinutes,
+        directors: metadata.directors,
+        countries: metadata.countries,
+        languages: metadata.languages,
+        synopsis: metadata.synopsis,
+        posterUrl: metadata.posterUrl,
+        metadataSourceIds: metadata.metadataSourceIds
+      }
+    };
+  });
 }
 
 function extractIfcSpecialEvents(payload: string) {
@@ -185,7 +218,22 @@ export const ifcCenterAdapter: VenueAdapter = {
     const [homePayload] = await this.fetchIndexPages();
     const homeScreenings = parseIfcHomeWidgetHtml(homePayload);
     if (homeScreenings.length > 0) {
-      return homeScreenings;
+      const urls = Array.from(new Set(homeScreenings.map((draft) => draft.sourceUrl))).filter(Boolean);
+      const pagePayloads = await Promise.allSettled(urls.map((url) => fetchLiveText(url)));
+      const metadataByUrl = new Map<string, ReturnType<typeof extractIfcMetadata>>();
+
+      pagePayloads.forEach((result, index) => {
+        if (result.status !== "fulfilled") {
+          return;
+        }
+        const sourceUrl = urls[index];
+        if (!sourceUrl) {
+          return;
+        }
+        metadataByUrl.set(sourceUrl, extractIfcMetadata(result.value, sourceUrl));
+      });
+
+      return mergeIfcHomeScreeningsWithFilmMetadata(homeScreenings, metadataByUrl);
     }
 
     const urls = extractIfcFilmUrls(homePayload).map((url) => toAbsoluteUrl(url, IFC_HOME_URL));
