@@ -118,8 +118,7 @@ export async function fetchRottenTomatoesMetadata(film: Film): Promise<RottenTom
     if (
       !metadata.canonicalTitle ||
       normalizeTitle(metadata.canonicalTitle) !== normalizeTitle(film.canonicalTitle) ||
-      (film.releaseYear && metadata.releaseYear && metadata.releaseYear !== film.releaseYear) ||
-      !metadata.synopsis
+      (film.releaseYear && metadata.releaseYear && metadata.releaseYear !== film.releaseYear)
     ) {
       rtCache.set(cacheKey, null);
       return null;

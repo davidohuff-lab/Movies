@@ -5,10 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { EMPTY_ADMIN_OVERRIDE, applyAdminOverrides } from "@/lib/client-overrides";
 import {
-  formatMonthYear,
   formatSnapshotDate,
-  getDatasetAnchorDate,
-  getDatasetDefaultDate,
   getMonthDays,
   getMonthStart,
   isFixtureDataset
@@ -16,28 +13,48 @@ import {
 import { PublicDataset, RecommendationResult, UserPreference } from "@/lib/domain";
 import { getFullDaySchedule } from "@/lib/search";
 import { FIRST_CLASS_TAGS } from "@/lib/tags";
-import { formatClock } from "@/lib/utils";
+import { formatClock, parseLocalDateTime } from "@/lib/utils";
 
 const PREFERENCES_KEY = "rep-signal-preferences";
 const BOOSTS_KEY = "rep-signal-boosts";
 const ADMIN_KEY = "rep-signal-admin";
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 interface CalendarViewProps {
   dataset: PublicDataset;
 }
 
+function getTodayEasternDateKey(): string {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  return formatter.format(new Date());
+}
+
+function formatDateBlock(day: string): { weekday: string; label: string; monthHeading: string } {
+  const date = parseLocalDateTime(day, "12:00");
+  return {
+    weekday: new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "America/New_York" }).format(date),
+    label: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).format(date),
+    monthHeading: new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "America/New_York" }).format(date)
+  };
+}
+
+function matchesAnyBoostTag(item: RecommendationResult, boosts: string[]): boolean {
+  if (boosts.length === 0) {
+    return true;
+  }
+  return boosts.some((boost) => item.tags.includes(boost));
+}
+
 export function CalendarView({ dataset }: CalendarViewProps) {
-  const anchorDate = getDatasetAnchorDate(dataset);
-  const monthStart = getMonthStart(anchorDate);
-  const defaultDate = getDatasetDefaultDate(dataset);
+  const todayKey = getTodayEasternDateKey();
+  const monthStart = getMonthStart(parseLocalDateTime(todayKey, "12:00"));
   const [preferences, setPreferences] = useState<UserPreference[]>([]);
   const [boosts, setBoosts] = useState<string[]>([]);
   const [adminOverrides, setAdminOverrides] = useState(EMPTY_ADMIN_OVERRIDE);
-  const [expandedDays, setExpandedDays] = useState<string[]>([]);
-  const [viewAllDay, setViewAllDay] = useState<string | null>(null);
-  const [expandedVenueRows, setExpandedVenueRows] = useState<string[]>([]);
 
   useEffect(() => {
     const rawPreferences = window.localStorage.getItem(PREFERENCES_KEY);
@@ -58,16 +75,17 @@ export function CalendarView({ dataset }: CalendarViewProps) {
       }, new Map<string, RecommendationResult[]>()),
     [boosts, days, effectiveDataset, preferences]
   );
-  const upcomingDays = useMemo(() => days.filter((day) => day >= defaultDate), [days, defaultDate]);
+  const upcomingDays = useMemo(() => days.filter((day) => day >= todayKey), [days, todayKey]);
   const visibleDays = upcomingDays.length > 0 ? upcomingDays : days;
+  const visibleMonthHeading = formatDateBlock(visibleDays[0] ?? todayKey).monthHeading;
 
   return (
     <div className="calendar-stack-layout">
       <section className="calendar-panel">
         <div className="section-header">
           <div>
-            <p className="eyebrow">{formatMonthYear(monthStart)}</p>
-            <h1>Monthly calendar</h1>
+            <p className="eyebrow">{visibleMonthHeading}</p>
+            <h1>Upcoming films</h1>
           </div>
           <div className="boost-row tight">
             {FIRST_CLASS_TAGS.slice(0, 6).map((tag) => (
@@ -98,11 +116,9 @@ export function CalendarView({ dataset }: CalendarViewProps) {
       </section>
       <section className="calendar-days-panel">
         {visibleDays.map((day) => {
-          const dayItems = fullDay.get(day) ?? [];
+          const dayItems = (fullDay.get(day) ?? []).filter((item) => matchesAnyBoostTag(item, boosts));
           const topFive = dayItems.slice(0, 5);
-          const hasMore = dayItems.length > 5;
-          const isExpanded = expandedDays.includes(day);
-          const hiddenItems = isExpanded ? dayItems.slice(5) : [];
+          const dateBlock = formatDateBlock(day);
 
           if (topFive.length === 0) {
             return null;
@@ -111,17 +127,11 @@ export function CalendarView({ dataset }: CalendarViewProps) {
           return (
             <article key={day} className="day-row">
               <div className="day-rail">
-                <p className="day-rail-label">{DAYS[new Date(`${day}T00:00:00`).getDay()]}</p>
-                <h3>{day}</h3>
-                <button
-                  type="button"
-                  className={viewAllDay === day ? "day-view-all active" : "day-view-all"}
-                  onClick={() => {
-                    setViewAllDay(viewAllDay === day ? null : day);
-                  }}
-                >
+                <p className="day-rail-label">{dateBlock.weekday}</p>
+                <h3>{dateBlock.label}</h3>
+                <Link href={`/calendar/${day}`} className="day-view-all">
                   View all
-                </button>
+                </Link>
               </div>
               <div className="day-strip">
                 {topFive.map((item) => (
@@ -142,94 +152,12 @@ export function CalendarView({ dataset }: CalendarViewProps) {
                     </div>
                   </Link>
                 ))}
-                {hasMore ? (
-                  <button
-                    type="button"
-                    className="day-more-button"
-                    onClick={() => {
-                      setExpandedDays(
-                        isExpanded ? expandedDays.filter((candidate) => candidate !== day) : [...expandedDays, day]
-                      );
-                    }}
-                  >
-                    {isExpanded ? "Less" : "More"}
-                  </button>
+                {dayItems.length > 5 ? (
+                  <Link href={`/calendar/${day}`} className="day-more-button">
+                    More
+                  </Link>
                 ) : null}
               </div>
-              {hiddenItems.length > 0 ? (
-                <div className="day-strip day-strip-extra">
-                  {hiddenItems.map((item) => (
-                    <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile compact">
-                      <div className="day-tile-body">
-                        <p className="day-tile-title">{item.film.canonicalTitle}</p>
-                        <p className="day-tile-meta">
-                          {item.venue.name} · {formatClock(new Date(item.screening.startAt))}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-              {viewAllDay === day ? (
-                <div className="day-venue-groups">
-                  {Array.from(
-                    dayItems.reduce((accumulator, item) => {
-                      const key = item.venue.id;
-                      if (!accumulator.has(key)) {
-                        accumulator.set(key, { venueName: item.venue.name, items: [] as RecommendationResult[] });
-                      }
-                      accumulator.get(key)!.items.push(item);
-                      return accumulator;
-                    }, new Map<string, { venueName: string; items: RecommendationResult[] }>())
-                  )
-                    .sort((left, right) => left[1].venueName.localeCompare(right[1].venueName))
-                    .map(([venueId, group]) => {
-                      const rowKey = `${day}-${venueId}`;
-                      const rowExpanded = expandedVenueRows.includes(rowKey);
-                      const venueTiles = rowExpanded ? group.items : group.items.slice(0, 5);
-                      const hasMoreVenueItems = group.items.length > 5;
-
-                      return (
-                        <div key={rowKey} className="day-venue-row">
-                          <div className="day-venue-label">{group.venueName}</div>
-                          <div className="day-strip day-strip-venue">
-                            {venueTiles.map((item) => (
-                              <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile">
-                                <div className="day-tile-image-wrap">
-                                  {item.film.posterUrl ? (
-                                    <img src={item.film.posterUrl} alt={item.film.canonicalTitle} className="day-tile-image" />
-                                  ) : (
-                                    <div className="day-tile-image placeholder">No image</div>
-                                  )}
-                                </div>
-                                <div className="day-tile-body">
-                                  <p className="day-tile-title">{item.film.canonicalTitle}</p>
-                                  <p className="day-tile-meta">{formatClock(new Date(item.screening.startAt))}</p>
-                                  <p className="day-tile-tags">{item.tags.slice(0, 3).join(" · ")}</p>
-                                </div>
-                              </Link>
-                            ))}
-                            {hasMoreVenueItems ? (
-                              <button
-                                type="button"
-                                className="day-more-button"
-                                onClick={() => {
-                                  setExpandedVenueRows(
-                                    rowExpanded
-                                      ? expandedVenueRows.filter((candidate) => candidate !== rowKey)
-                                      : [...expandedVenueRows, rowKey]
-                                  );
-                                }}
-                              >
-                                {rowExpanded ? "Less" : "More"}
-                              </button>
-                            ) : null}
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              ) : null}
             </article>
           );
         })}

@@ -483,6 +483,7 @@ table {
 }
 
 .day-view-all {
+  display: inline-block;
   margin-top: 0.6rem;
   border-radius: 4px;
   border: 1px solid var(--line);
@@ -505,6 +506,7 @@ table {
   gap: var(--space-3);
   overflow-x: auto;
   padding-bottom: 0.3rem;
+  scroll-snap-type: x proximity;
 }
 
 .day-strip-extra {
@@ -519,6 +521,12 @@ table {
   border-top: 1px solid var(--line-soft);
   display: grid;
   gap: var(--space-3);
+}
+
+.day-venue-groups-open {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .day-venue-row {
@@ -546,6 +554,7 @@ table {
 
 .day-tile {
   flex: 0 0 220px;
+  scroll-snap-align: start;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -605,6 +614,9 @@ table {
 
 .day-more-button {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   align-self: center;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -614,6 +626,10 @@ table {
   letter-spacing: 0.1em;
   font-size: 0.67rem;
   font-weight: 700;
+}
+
+.day-row-full {
+  grid-template-columns: 110px minmax(0, 1fr);
 }
 
 .calendar-grid {

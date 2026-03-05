@@ -137,17 +137,32 @@ async function enrichFilmsWithRottenTomatoes(films: Film[], screenings: Screenin
   const activeFilmIds = new Set(screenings.map((screening) => screening.filmId));
 
   for (const film of films) {
-    if (!activeFilmIds.has(film.id) || !hasWeakSynopsis(film.synopsis)) {
+    if (!activeFilmIds.has(film.id)) {
+      continue;
+    }
+
+    const needsSynopsis = hasWeakSynopsis(film.synopsis);
+    const needsPoster = !film.posterUrl;
+    if (!needsSynopsis && !needsPoster) {
       continue;
     }
 
     const metadata = await fetchRottenTomatoesMetadata(film);
-    if (!metadata?.synopsis) {
+    if (!metadata) {
       continue;
     }
 
-    film.synopsis = metadata.synopsis;
-    film.posterUrl = film.posterUrl ?? metadata.posterUrl;
+    if (needsSynopsis && metadata.synopsis) {
+      film.synopsis = metadata.synopsis;
+    }
+    if (needsPoster && metadata.posterUrl) {
+      film.posterUrl = metadata.posterUrl;
+    }
+
+    if (!film.synopsis && !film.posterUrl) {
+      continue;
+    }
+
     film.metadataSourceIds = { ...(film.metadataSourceIds ?? {}), rottentomatoes: "matched-search" };
   }
 }

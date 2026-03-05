@@ -6,7 +6,34 @@ import {
   SearchFilters
 } from "@/lib/domain";
 import { buildRecommendationProfile, scoreScreening } from "@/lib/scoring";
-import { endOfDay, minutesBetween, parseLocalDateTime, sortBy, startOfDay } from "@/lib/utils";
+import { endOfDay, minutesBetween, parseLocalDateTime, sortBy } from "@/lib/utils";
+
+const EASTERN_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+});
+
+const EASTERN_MONTH_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "numeric"
+});
+
+function toEasternDateKey(date: Date): string {
+  return EASTERN_DATE_FORMATTER.format(date);
+}
+
+function toEasternMonthKey(date: Date): string {
+  const parts = Object.fromEntries(
+    EASTERN_MONTH_FORMATTER
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+  return `${parts.year}-${parts.month}`;
+}
 
 function enrich(dataset: PublicDataset): ScreeningWithRelations[] {
   const filmMap = new Map(dataset.films.map((film) => [film.id, film]));
@@ -117,16 +144,15 @@ export function getCalendarRecommendations(
   context: SearchContext
 ): Map<string, RecommendationResult[]> {
   const profile = buildRecommendationProfile(enrich(dataset), context.preferences);
-  const month = monthDate.getUTCMonth();
-  const year = monthDate.getUTCFullYear();
+  const targetMonthKey = toEasternMonthKey(monthDate);
   const byDay = new Map<string, RecommendationResult[]>();
 
   enrich(dataset).forEach((item) => {
     const screeningDate = new Date(item.screening.startAt);
-    if (screeningDate.getUTCMonth() !== month || screeningDate.getUTCFullYear() !== year) {
+    if (toEasternMonthKey(screeningDate) !== targetMonthKey) {
       return;
     }
-    const key = startOfDay(screeningDate).toISOString().slice(0, 10);
+    const key = toEasternDateKey(screeningDate);
     const scored = scoreScreening(item, 0, context, profile);
     byDay.set(key, [...(byDay.get(key) ?? []), scored]);
   });
@@ -146,16 +172,13 @@ export function getFullDaySchedule(
   day: string,
   context: SearchContext
 ): RecommendationResult[] {
-  const target = new Date(`${day}T00:00:00Z`);
-  const start = startOfDay(target);
-  const end = endOfDay(target);
   const profile = buildRecommendationProfile(enrich(dataset), context.preferences);
 
   return sortBy(
     enrich(dataset)
       .filter((item) => {
         const screeningDate = new Date(item.screening.startAt);
-        return screeningDate >= start && screeningDate <= end;
+        return toEasternDateKey(screeningDate) === day;
       })
       .map((item) => scoreScreening(item, 0, context, profile)),
     (left, right) =>
