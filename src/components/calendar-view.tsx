@@ -36,6 +36,8 @@ export function CalendarView({ dataset }: CalendarViewProps) {
   const [boosts, setBoosts] = useState<string[]>([]);
   const [adminOverrides, setAdminOverrides] = useState(EMPTY_ADMIN_OVERRIDE);
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
+  const [viewAllDay, setViewAllDay] = useState<string | null>(null);
+  const [expandedVenueRows, setExpandedVenueRows] = useState<string[]>([]);
 
   useEffect(() => {
     const rawPreferences = window.localStorage.getItem(PREFERENCES_KEY);
@@ -111,6 +113,15 @@ export function CalendarView({ dataset }: CalendarViewProps) {
               <div className="day-rail">
                 <p className="day-rail-label">{DAYS[new Date(`${day}T00:00:00`).getDay()]}</p>
                 <h3>{day}</h3>
+                <button
+                  type="button"
+                  className={viewAllDay === day ? "day-view-all active" : "day-view-all"}
+                  onClick={() => {
+                    setViewAllDay(viewAllDay === day ? null : day);
+                  }}
+                >
+                  View all
+                </button>
               </div>
               <div className="day-strip">
                 {topFive.map((item) => (
@@ -157,6 +168,66 @@ export function CalendarView({ dataset }: CalendarViewProps) {
                       </div>
                     </Link>
                   ))}
+                </div>
+              ) : null}
+              {viewAllDay === day ? (
+                <div className="day-venue-groups">
+                  {Array.from(
+                    dayItems.reduce((accumulator, item) => {
+                      const key = item.venue.id;
+                      if (!accumulator.has(key)) {
+                        accumulator.set(key, { venueName: item.venue.name, items: [] as RecommendationResult[] });
+                      }
+                      accumulator.get(key)!.items.push(item);
+                      return accumulator;
+                    }, new Map<string, { venueName: string; items: RecommendationResult[] }>())
+                  )
+                    .sort((left, right) => left[1].venueName.localeCompare(right[1].venueName))
+                    .map(([venueId, group]) => {
+                      const rowKey = `${day}-${venueId}`;
+                      const rowExpanded = expandedVenueRows.includes(rowKey);
+                      const venueTiles = rowExpanded ? group.items : group.items.slice(0, 5);
+                      const hasMoreVenueItems = group.items.length > 5;
+
+                      return (
+                        <div key={rowKey} className="day-venue-row">
+                          <div className="day-venue-label">{group.venueName}</div>
+                          <div className="day-strip day-strip-venue">
+                            {venueTiles.map((item) => (
+                              <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile">
+                                <div className="day-tile-image-wrap">
+                                  {item.film.posterUrl ? (
+                                    <img src={item.film.posterUrl} alt={item.film.canonicalTitle} className="day-tile-image" />
+                                  ) : (
+                                    <div className="day-tile-image placeholder">No image</div>
+                                  )}
+                                </div>
+                                <div className="day-tile-body">
+                                  <p className="day-tile-title">{item.film.canonicalTitle}</p>
+                                  <p className="day-tile-meta">{formatClock(new Date(item.screening.startAt))}</p>
+                                  <p className="day-tile-tags">{item.tags.slice(0, 3).join(" · ")}</p>
+                                </div>
+                              </Link>
+                            ))}
+                            {hasMoreVenueItems ? (
+                              <button
+                                type="button"
+                                className="day-more-button"
+                                onClick={() => {
+                                  setExpandedVenueRows(
+                                    rowExpanded
+                                      ? expandedVenueRows.filter((candidate) => candidate !== rowKey)
+                                      : [...expandedVenueRows, rowKey]
+                                  );
+                                }}
+                              >
+                                {rowExpanded ? "Less" : "More"}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               ) : null}
             </article>

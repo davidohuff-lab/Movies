@@ -392,6 +392,21 @@ table {
   font-size: 1rem;
 }
 
+.day-view-all {
+  margin-top: 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.day-view-all.active {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+
 .day-strip {
   display: flex;
   gap: 0.8rem;
@@ -402,6 +417,37 @@ table {
 .day-strip-extra {
   grid-column: 2;
   margin-top: 0.85rem;
+}
+
+.day-venue-groups {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.day-venue-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.day-venue-label {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+}
+
+.day-strip-venue {
+  margin: 0;
 }
 
 .day-tile {
@@ -665,5 +711,9 @@ td {
 
   .day-rail {
     text-align: left;
+  }
+
+  .day-venue-row {
+    grid-template-columns: 1fr;
   }
 }
