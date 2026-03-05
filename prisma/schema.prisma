@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Venue {
+  id                 String      @id @default(cuid())
+  name               String
+  slug               String      @unique
+  website            String
+  address            String
+  borough            String
+  lat                Float
+  lng                Float
+  neighborhood       String?
+  nearestSubwayStops Json
+  active             Boolean     @default(true)
+  adapterType        String
+  notes              String?
+  includeRules       Json?
+  tags               Json?
+  screenings         Screening[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+}
+
+model Film {
+  id                String           @id @default(cuid())
+  slug              String           @unique
+  canonicalTitle    String
+  originalTitle     String?
+  releaseYear       Int?
+  runtimeMinutes    Int?
+  directors         Json
+  countries         Json
+  languages         Json
+  metadataSourceIds Json?
+  synopsis          String?
+  aiSummary         String?
+  posterUrl         String?
+  criterionLikely   Boolean          @default(false)
+  screenings        Screening[]
+  preferences       UserPreference[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Screening {
+  id               String         @id @default(cuid())
+  venueId          String
+  filmId           String
+  startAt          DateTime
+  endAt            DateTime?
+  seriesName       String?
+  eventTitleRaw    String
+  descriptionRaw   String
+  formatTags       Json
+  userTags         Json
+  sourceType       String
+  sourceUrl        String
+  sourceHash       String
+  rawPayload       Json
+  lastSeenAt       DateTime
+  isManualOverride Boolean        @default(false)
+  isCancelled      Boolean        @default(false)
+  soldOut          Boolean?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  venue            Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  film             Film           @relation(fields: [filmId], references: [id], onDelete: Cascade)
+  tags             ScreeningTag[]
+}
+
+model UserPreference {
+  id        String   @id @default(cuid())
+  filmId     String
+  thumb      String
+  note       String?
+  createdAt  DateTime @default(now())
+  film       Film     @relation(fields: [filmId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id         String         @id @default(cuid())
+  slug       String         @unique
+  name       String
+  type       String
+  active     Boolean        @default(true)
+  screenings ScreeningTag[]
+}
+
+model ScreeningTag {
+  screeningId String
+  tagId       String
+  confidence  Float
+  source      String
+  screening   Screening @relation(fields: [screeningId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([screeningId, tagId])
+}
+
+model DailyRecommendationCache {
+  id                     String   @id @default(cuid())
+  day                    DateTime
+  filmId                 String
+  score                  Float
+  explanation            String
+  boostedByCurrentToggle Boolean
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
