@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { FilmDetailDrawer } from "@/components/film-detail-drawer";
 import { EMPTY_ADMIN_OVERRIDE, applyAdminOverrides } from "@/lib/client-overrides";
 import {
   formatMonthYear,
@@ -14,8 +14,7 @@ import {
   isFixtureDataset
 } from "@/lib/dataset-metadata";
 import { PublicDataset, RecommendationResult, UserPreference } from "@/lib/domain";
-import { getCalendarRecommendations, getFullDaySchedule } from "@/lib/search";
-import { getThreeSentenceSummary } from "@/lib/summaries";
+import { getFullDaySchedule } from "@/lib/search";
 import { FIRST_CLASS_TAGS } from "@/lib/tags";
 import { formatClock } from "@/lib/utils";
 
@@ -32,11 +31,11 @@ interface CalendarViewProps {
 export function CalendarView({ dataset }: CalendarViewProps) {
   const anchorDate = getDatasetAnchorDate(dataset);
   const monthStart = getMonthStart(anchorDate);
+  const defaultDate = getDatasetDefaultDate(dataset);
   const [preferences, setPreferences] = useState<UserPreference[]>([]);
   const [boosts, setBoosts] = useState<string[]>([]);
-  const [selectedDay, setSelectedDay] = useState(getDatasetDefaultDate(dataset));
   const [adminOverrides, setAdminOverrides] = useState(EMPTY_ADMIN_OVERRIDE);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [expandedDays, setExpandedDays] = useState<string[]>([]);
 
   useEffect(() => {
     const rawPreferences = window.localStorage.getItem(PREFERENCES_KEY);
@@ -48,41 +47,20 @@ export function CalendarView({ dataset }: CalendarViewProps) {
   }, []);
 
   const effectiveDataset = useMemo(() => applyAdminOverrides(dataset, adminOverrides), [adminOverrides, dataset]);
-  const calendarMap = useMemo(
-    () => getCalendarRecommendations(effectiveDataset, monthStart, { preferences, liveBoosts: boosts }),
-    [boosts, effectiveDataset, monthStart, preferences]
-  );
-  const fullDay = useMemo(
-    () => getFullDaySchedule(effectiveDataset, selectedDay, { preferences, liveBoosts: boosts }),
-    [boosts, effectiveDataset, preferences, selectedDay]
-  );
-  const allVisibleItems = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          [...Array.from(calendarMap.values()).flat(), ...fullDay].map((item) => [item.screening.id, item] as const)
-        ).values()
-      ),
-    [calendarMap, fullDay]
-  );
-  const selected = useMemo(
-    () => allVisibleItems.find((item) => item.screening.id === selectedId) ?? null,
-    [allVisibleItems, selectedId]
-  );
-
   const days = useMemo(() => getMonthDays(monthStart), [monthStart]);
-
-  function vote(filmId: string, thumb: "up" | "down") {
-    const next = [
-      ...preferences.filter((preference) => preference.filmId !== filmId),
-      { filmId, thumb, createdAt: new Date().toISOString() }
-    ];
-    setPreferences(next);
-    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(next));
-  }
+  const fullDay = useMemo(
+    () =>
+      days.reduce((accumulator, day) => {
+        accumulator.set(day, getFullDaySchedule(effectiveDataset, day, { preferences, liveBoosts: boosts }));
+        return accumulator;
+      }, new Map<string, RecommendationResult[]>()),
+    [boosts, days, effectiveDataset, preferences]
+  );
+  const upcomingDays = useMemo(() => days.filter((day) => day >= defaultDate), [days, defaultDate]);
+  const visibleDays = upcomingDays.length > 0 ? upcomingDays : days;
 
   return (
-    <div className="calendar-layout">
+    <div className="calendar-stack-layout">
       <section className="calendar-panel">
         <div className="section-header">
           <div>
@@ -115,74 +93,75 @@ export function CalendarView({ dataset }: CalendarViewProps) {
             <strong>Live source status.</strong> {dataset.dataStatusMessage}
           </div>
         ) : null}
-        <div className="calendar-grid">
-          {DAYS.map((day) => (
-            <div key={day} className="calendar-head">
-              {day}
-            </div>
-          ))}
-          {days.map((day) => {
-            const recommendations = calendarMap.get(day) ?? [];
-            return (
-              <div
-                key={day}
-                className={selectedDay === day ? "calendar-cell active" : "calendar-cell"}
-                onClick={() => setSelectedDay(day)}
-              >
-                <span className="day-number">{Number(day.slice(-2))}</span>
-                <div className="day-list">
-                  {recommendations.map((item) => (
-                    <button
-                      key={item.screening.id}
-                      type="button"
-                      className={`day-film ${item.tier}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setSelectedDay(day);
-                        setSelectedId(item.screening.id);
-                      }}
-                    >
-                      {item.film.canonicalTitle}
-                    </button>
+      </section>
+      <section className="calendar-days-panel">
+        {visibleDays.map((day) => {
+          const dayItems = fullDay.get(day) ?? [];
+          const topFive = dayItems.slice(0, 5);
+          const hasMore = dayItems.length > 5;
+          const isExpanded = expandedDays.includes(day);
+          const hiddenItems = isExpanded ? dayItems.slice(5) : [];
+
+          if (topFive.length === 0) {
+            return null;
+          }
+
+          return (
+            <article key={day} className="day-row">
+              <div className="day-rail">
+                <p className="day-rail-label">{DAYS[new Date(`${day}T00:00:00`).getDay()]}</p>
+                <h3>{day}</h3>
+              </div>
+              <div className="day-strip">
+                {topFive.map((item) => (
+                  <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile">
+                    <div className="day-tile-image-wrap">
+                      {item.film.posterUrl ? (
+                        <img src={item.film.posterUrl} alt={item.film.canonicalTitle} className="day-tile-image" />
+                      ) : (
+                        <div className="day-tile-image placeholder">No image</div>
+                      )}
+                    </div>
+                    <div className="day-tile-body">
+                      <p className="day-tile-title">{item.film.canonicalTitle}</p>
+                      <p className="day-tile-meta">
+                        {item.venue.name} · {formatClock(new Date(item.screening.startAt))}
+                      </p>
+                      <p className="day-tile-tags">{item.tags.slice(0, 3).join(" · ")}</p>
+                    </div>
+                  </Link>
+                ))}
+                {hasMore ? (
+                  <button
+                    type="button"
+                    className="day-more-button"
+                    onClick={() => {
+                      setExpandedDays(
+                        isExpanded ? expandedDays.filter((candidate) => candidate !== day) : [...expandedDays, day]
+                      );
+                    }}
+                  >
+                    {isExpanded ? "Less" : "More"}
+                  </button>
+                ) : null}
+              </div>
+              {hiddenItems.length > 0 ? (
+                <div className="day-strip day-strip-extra">
+                  {hiddenItems.map((item) => (
+                    <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile compact">
+                      <div className="day-tile-body">
+                        <p className="day-tile-title">{item.film.canonicalTitle}</p>
+                        <p className="day-tile-meta">
+                          {item.venue.name} · {formatClock(new Date(item.screening.startAt))}
+                        </p>
+                      </div>
+                    </Link>
                   ))}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-      <section className="day-panel">
-        <p className="eyebrow">Full schedule</p>
-        <h2>{selectedDay}</h2>
-        {selected ? (
-          <FilmDetailDrawer
-            item={selected}
-            summary={getThreeSentenceSummary(selected, selected.explanation)}
-            preferences={preferences}
-            onVote={vote}
-            onClose={() => setSelectedId(null)}
-          />
-        ) : null}
-        <div className="card-list">
-          {fullDay.map((item: RecommendationResult) => (
-            <button
-              key={item.screening.id}
-              type="button"
-              className="screening-card"
-              onClick={() => setSelectedId(item.screening.id)}
-            >
-              <div className="card-topline">
-                <span className={`badge ${item.tier}`}>{item.tier}</span>
-                <span>{formatClock(new Date(item.screening.startAt))}</span>
-              </div>
-              <h3>{item.film.canonicalTitle}</h3>
-              <p className="muted">
-                {item.venue.name} · {item.travelMinutes} min
-              </p>
-              <p className="reason">{item.explanation}</p>
-            </button>
-          ))}
-        </div>
+              ) : null}
+            </article>
+          );
+        })}
       </section>
     </div>
   );

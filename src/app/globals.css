@@ -350,6 +350,125 @@ table {
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
 }
 
+.calendar-stack-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.calendar-days-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.day-row {
+  border-radius: 28px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 241, 0.72);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.day-rail {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(27, 28, 26, 0.08);
+  padding: 0.7rem;
+  text-align: center;
+}
+
+.day-rail-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.day-rail h3 {
+  margin: 0.3rem 0 0;
+  font-size: 1rem;
+}
+
+.day-strip {
+  display: flex;
+  gap: 0.8rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.day-strip-extra {
+  grid-column: 2;
+  margin-top: 0.85rem;
+}
+
+.day-tile {
+  flex: 0 0 220px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.8);
+  transition: transform 0.16s ease;
+}
+
+.day-tile:hover {
+  transform: translateY(-2px);
+}
+
+.day-tile.compact {
+  flex-basis: 240px;
+}
+
+.day-tile-image-wrap {
+  width: 100%;
+  height: 150px;
+  background: rgba(27, 28, 26, 0.08);
+}
+
+.day-tile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.day-tile-image.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.day-tile-body {
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.day-tile-title {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.day-tile-meta,
+.day-tile-tags {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.day-more-button {
+  flex: 0 0 auto;
+  align-self: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 0.75rem 1.1rem;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -534,5 +653,17 @@ td {
 
   .calendar-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .day-row {
+    grid-template-columns: 1fr;
+  }
+
+  .day-strip-extra {
+    grid-column: 1;
+  }
+
+  .day-rail {
+    text-align: left;
   }
 }
