@@ -18,6 +18,13 @@ interface CalendarDayViewProps {
   day: string;
 }
 
+interface CalendarTileEntry {
+  key: string;
+  item: RecommendationResult;
+  showtimes: string[];
+  tags: string[];
+}
+
 function formatDateBlock(day: string): { weekday: string; label: string; heading: string } {
   const date = parseLocalDateTime(day, "12:00");
   return {
@@ -38,6 +45,36 @@ function matchesAnyBoostTag(item: RecommendationResult, boosts: string[]): boole
     return true;
   }
   return boosts.some((boost) => item.tags.includes(boost));
+}
+
+function buildCalendarTileEntries(items: RecommendationResult[]): CalendarTileEntry[] {
+  const byFilmVenue = new Map<string, CalendarTileEntry>();
+
+  for (const item of items) {
+    const key = `${item.film.id}::${item.venue.id}`;
+    const screeningTime = formatClock(new Date(item.screening.startAt));
+    const filteredTags = Array.from(new Set(item.tags)).filter(
+      (tag) => tag.trim().toLowerCase() !== item.venue.name.trim().toLowerCase()
+    );
+
+    if (!byFilmVenue.has(key)) {
+      byFilmVenue.set(key, {
+        key,
+        item,
+        showtimes: [screeningTime],
+        tags: filteredTags
+      });
+      continue;
+    }
+
+    const current = byFilmVenue.get(key)!;
+    if (!current.showtimes.includes(screeningTime)) {
+      current.showtimes.push(screeningTime);
+    }
+    current.tags = Array.from(new Set([...current.tags, ...filteredTags]));
+  }
+
+  return Array.from(byFilmVenue.values());
 }
 
 export function CalendarDayView({ dataset, day }: CalendarDayViewProps) {
@@ -117,26 +154,27 @@ export function CalendarDayView({ dataset, day }: CalendarDayViewProps) {
           </div>
           <div className="day-venue-groups day-venue-groups-open">
             {groupedByVenue.map(([venueId, group]) => {
+              const venueTilesAll = buildCalendarTileEntries(group.items);
               const rowExpanded = expandedVenueRows.includes(venueId);
-              const venueTiles = rowExpanded ? group.items : group.items.slice(0, 5);
-              const hasMoreVenueItems = group.items.length > 5;
+              const venueTiles = rowExpanded ? venueTilesAll : venueTilesAll.slice(0, 5);
+              const hasMoreVenueItems = venueTilesAll.length > 5;
               return (
                 <div key={venueId} className="day-venue-row">
                   <div className="day-venue-label">{group.venueName}</div>
                   <div className="day-strip day-strip-venue">
-                    {venueTiles.map((item) => (
-                      <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile">
+                    {venueTiles.map((entry) => (
+                      <Link key={entry.key} href={`/films/${entry.item.film.slug}`} className="day-tile">
                         <div className="day-tile-image-wrap">
-                          {item.film.posterUrl ? (
-                            <img src={item.film.posterUrl} alt={item.film.canonicalTitle} className="day-tile-image" />
+                          {entry.item.film.posterUrl ? (
+                            <img src={entry.item.film.posterUrl} alt={entry.item.film.canonicalTitle} className="day-tile-image" />
                           ) : (
                             <div className="day-tile-image placeholder">No image</div>
                           )}
                         </div>
                         <div className="day-tile-body">
-                          <p className="day-tile-title">{item.film.canonicalTitle}</p>
-                          <p className="day-tile-meta">{formatClock(new Date(item.screening.startAt))}</p>
-                          <p className="day-tile-tags">{item.tags.slice(0, 3).join(" · ")}</p>
+                          <p className="day-tile-title">{entry.item.film.canonicalTitle}</p>
+                          <p className="day-tile-meta">{entry.showtimes.join(", ")}</p>
+                          {entry.tags.length > 0 ? <p className="day-tile-tags">{entry.tags.slice(0, 3).join(" · ")}</p> : null}
                         </div>
                       </Link>
                     ))}

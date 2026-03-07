@@ -23,6 +23,13 @@ interface CalendarViewProps {
   dataset: PublicDataset;
 }
 
+interface CalendarTileEntry {
+  key: string;
+  item: RecommendationResult;
+  showtimes: string[];
+  tags: string[];
+}
+
 function getTodayEasternDateKey(): string {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/New_York",
@@ -47,6 +54,36 @@ function matchesAnyBoostTag(item: RecommendationResult, boosts: string[]): boole
     return true;
   }
   return boosts.some((boost) => item.tags.includes(boost));
+}
+
+function buildCalendarTileEntries(items: RecommendationResult[]): CalendarTileEntry[] {
+  const byFilmVenue = new Map<string, CalendarTileEntry>();
+
+  for (const item of items) {
+    const key = `${item.film.id}::${item.venue.id}`;
+    const screeningTime = formatClock(new Date(item.screening.startAt));
+    const filteredTags = Array.from(new Set(item.tags)).filter(
+      (tag) => tag.trim().toLowerCase() !== item.venue.name.trim().toLowerCase()
+    );
+
+    if (!byFilmVenue.has(key)) {
+      byFilmVenue.set(key, {
+        key,
+        item,
+        showtimes: [screeningTime],
+        tags: filteredTags
+      });
+      continue;
+    }
+
+    const current = byFilmVenue.get(key)!;
+    if (!current.showtimes.includes(screeningTime)) {
+      current.showtimes.push(screeningTime);
+    }
+    current.tags = Array.from(new Set([...current.tags, ...filteredTags]));
+  }
+
+  return Array.from(byFilmVenue.values());
 }
 
 export function CalendarView({ dataset }: CalendarViewProps) {
@@ -117,7 +154,8 @@ export function CalendarView({ dataset }: CalendarViewProps) {
       <section className="calendar-days-panel">
         {visibleDays.map((day) => {
           const dayItems = (fullDay.get(day) ?? []).filter((item) => matchesAnyBoostTag(item, boosts));
-          const topFive = dayItems.slice(0, 5);
+          const tileEntries = buildCalendarTileEntries(dayItems);
+          const topFive = tileEntries.slice(0, 5);
           const dateBlock = formatDateBlock(day);
 
           if (topFive.length === 0) {
@@ -134,25 +172,25 @@ export function CalendarView({ dataset }: CalendarViewProps) {
                 </Link>
               </div>
               <div className="day-strip">
-                {topFive.map((item) => (
-                  <Link key={item.screening.id} href={`/films/${item.film.slug}`} className="day-tile">
+                {topFive.map((entry) => (
+                  <Link key={entry.key} href={`/films/${entry.item.film.slug}`} className="day-tile">
                     <div className="day-tile-image-wrap">
-                      {item.film.posterUrl ? (
-                        <img src={item.film.posterUrl} alt={item.film.canonicalTitle} className="day-tile-image" />
+                      {entry.item.film.posterUrl ? (
+                        <img src={entry.item.film.posterUrl} alt={entry.item.film.canonicalTitle} className="day-tile-image" />
                       ) : (
                         <div className="day-tile-image placeholder">No image</div>
                       )}
                     </div>
                     <div className="day-tile-body">
-                      <p className="day-tile-title">{item.film.canonicalTitle}</p>
+                      <p className="day-tile-title">{entry.item.film.canonicalTitle}</p>
                       <p className="day-tile-meta">
-                        {item.venue.name} · {formatClock(new Date(item.screening.startAt))}
+                        {entry.item.venue.name} · {entry.showtimes.join(", ")}
                       </p>
-                      <p className="day-tile-tags">{item.tags.slice(0, 3).join(" · ")}</p>
+                      {entry.tags.length > 0 ? <p className="day-tile-tags">{entry.tags.slice(0, 3).join(" · ")}</p> : null}
                     </div>
                   </Link>
                 ))}
-                {dayItems.length > 5 ? (
+                {tileEntries.length > 5 ? (
                   <Link href={`/calendar/${day}`} className="day-more-button">
                     More
                   </Link>
