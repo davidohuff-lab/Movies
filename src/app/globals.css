@@ -561,7 +561,8 @@ table {
   background: #fffdf8;
   box-shadow: 0 3px 12px rgba(28, 22, 14, 0.06);
   transition: transform 0.16s ease;
-  display: grid;
+  display: flex;
+  flex-direction: column;
 }
 
 .day-tile:hover {
@@ -570,6 +571,11 @@ table {
 
 .day-tile-link {
   display: block;
+  flex: 1;
+}
+
+.day-tile-link:hover {
+  color: inherit;
 }
 
 .day-tile.compact {
@@ -589,6 +595,12 @@ table {
   display: block;
 }
 
+.day-tile-logo {
+  object-fit: contain;
+  padding: 0.9rem;
+  background: #fffefb;
+}
+
 .day-tile-image.placeholder {
   display: grid;
   place-items: center;
@@ -598,8 +610,10 @@ table {
 
 .day-tile-body {
   padding: 0.68rem;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.3rem;
+  min-height: 132px;
 }
 
 .day-tile-title {
@@ -621,18 +635,39 @@ table {
   display: flex;
   justify-content: space-between;
   padding: 0 0.65rem 0.65rem;
+  margin-top: auto;
 }
 
 .tile-vote-button {
-  border: 1px solid var(--line);
-  background: #191919;
-  color: #f5d96f;
-  border-radius: 2px;
+  border-radius: 6px;
   width: 32px;
   height: 28px;
   display: grid;
   place-items: center;
   font-size: 0.95rem;
+  background: #fffdf8;
+}
+
+.tile-vote-button.up {
+  border: 1px solid rgba(95, 151, 112, 0.55);
+  color: #3f7a52;
+}
+
+.tile-vote-button.up.active {
+  border-color: #5f9770;
+  background: rgba(95, 151, 112, 0.18);
+  color: #295839;
+}
+
+.tile-vote-button.down {
+  border: 1px solid rgba(191, 104, 104, 0.55);
+  color: #a04545;
+}
+
+.tile-vote-button.down.active {
+  border-color: #bf6868;
+  background: rgba(191, 104, 104, 0.18);
+  color: #7f2f2f;
 }
 
 .day-more-button {

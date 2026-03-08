@@ -106,6 +106,15 @@ function applyPreferenceOrdering(entries: CalendarTileEntry[], preferences: User
     });
 }
 
+function getVenueLogoUrl(website: string): string | null {
+  try {
+    const hostname = new URL(website).hostname.replace(/^www\./i, "");
+    return `https://logo.clearbit.com/${hostname}`;
+  } catch {
+    return null;
+  }
+}
+
 export function CalendarView({ dataset }: CalendarViewProps) {
   const todayKey = getTodayEasternDateKey();
   const monthStart = getMonthStart(parseLocalDateTime(todayKey, "12:00"));
@@ -207,6 +216,12 @@ export function CalendarView({ dataset }: CalendarViewProps) {
                       <div className="day-tile-image-wrap">
                         {entry.item.film.posterUrl ? (
                           <img src={entry.item.film.posterUrl} alt={entry.item.film.canonicalTitle} className="day-tile-image" />
+                        ) : getVenueLogoUrl(entry.item.venue.website) ? (
+                          <img
+                            src={getVenueLogoUrl(entry.item.venue.website) ?? ""}
+                            alt={`${entry.item.venue.name} logo`}
+                            className="day-tile-image day-tile-logo"
+                          />
                         ) : (
                           <div className="day-tile-image placeholder">No image</div>
                         )}
@@ -220,10 +235,18 @@ export function CalendarView({ dataset }: CalendarViewProps) {
                       </div>
                     </Link>
                     <div className="tile-vote-row">
-                      <button type="button" className="tile-vote-button" onClick={() => onVote(entry.item.film.id, "up")}>
+                      <button
+                        type="button"
+                        className={`tile-vote-button up ${getPreferenceThumb(preferences, entry.item.film.id) === "up" ? "active" : ""}`}
+                        onClick={() => onVote(entry.item.film.id, "up")}
+                      >
                         👍
                       </button>
-                      <button type="button" className="tile-vote-button" onClick={() => onVote(entry.item.film.id, "down")}>
+                      <button
+                        type="button"
+                        className={`tile-vote-button down ${getPreferenceThumb(preferences, entry.item.film.id) === "down" ? "active" : ""}`}
+                        onClick={() => onVote(entry.item.film.id, "down")}
+                      >
                         👎
                       </button>
                     </div>
