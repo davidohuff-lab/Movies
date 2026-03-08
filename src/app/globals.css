@@ -561,10 +561,15 @@ table {
   background: #fffdf8;
   box-shadow: 0 3px 12px rgba(28, 22, 14, 0.06);
   transition: transform 0.16s ease;
+  display: grid;
 }
 
 .day-tile:hover {
   transform: translateY(-2px);
+}
+
+.day-tile-link {
+  display: block;
 }
 
 .day-tile.compact {
@@ -610,6 +615,24 @@ table {
   margin: 0;
   color: var(--muted);
   font-size: 0.79rem;
+}
+
+.tile-vote-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.65rem 0.65rem;
+}
+
+.tile-vote-button {
+  border: 1px solid var(--line);
+  background: #191919;
+  color: #f5d96f;
+  border-radius: 2px;
+  width: 32px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
 }
 
 .day-more-button {

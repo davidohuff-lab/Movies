@@ -86,6 +86,26 @@ function buildCalendarTileEntries(items: RecommendationResult[]): CalendarTileEn
   return Array.from(byFilmVenue.values());
 }
 
+function getPreferenceThumb(preferences: UserPreference[], filmId: string): "up" | "down" | null {
+  return preferences.find((preference) => preference.filmId === filmId)?.thumb ?? null;
+}
+
+function applyPreferenceOrdering(entries: CalendarTileEntry[], preferences: UserPreference[]) {
+  return entries
+    .filter((entry) => getPreferenceThumb(preferences, entry.item.film.id) !== "down")
+    .sort((left, right) => {
+      const leftThumb = getPreferenceThumb(preferences, left.item.film.id);
+      const rightThumb = getPreferenceThumb(preferences, right.item.film.id);
+      if (leftThumb === "up" && rightThumb !== "up") {
+        return -1;
+      }
+      if (rightThumb === "up" && leftThumb !== "up") {
+        return 1;
+      }
+      return 0;
+    });
+}
+
 export function CalendarView({ dataset }: CalendarViewProps) {
   const todayKey = getTodayEasternDateKey();
   const monthStart = getMonthStart(parseLocalDateTime(todayKey, "12:00"));
@@ -101,6 +121,15 @@ export function CalendarView({ dataset }: CalendarViewProps) {
     setBoosts(rawBoosts ? (JSON.parse(rawBoosts) as string[]) : []);
     setAdminOverrides(rawAdmin ? { ...EMPTY_ADMIN_OVERRIDE, ...(JSON.parse(rawAdmin) as typeof EMPTY_ADMIN_OVERRIDE) } : EMPTY_ADMIN_OVERRIDE);
   }, []);
+
+  function onVote(filmId: string, thumb: "up" | "down") {
+    const next = [
+      ...preferences.filter((preference) => preference.filmId !== filmId),
+      { filmId, thumb, createdAt: new Date().toISOString() }
+    ];
+    setPreferences(next);
+    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(next));
+  }
 
   const effectiveDataset = useMemo(() => applyAdminOverrides(dataset, adminOverrides), [adminOverrides, dataset]);
   const days = useMemo(() => getMonthDays(monthStart), [monthStart]);
@@ -154,11 +183,11 @@ export function CalendarView({ dataset }: CalendarViewProps) {
       <section className="calendar-days-panel">
         {visibleDays.map((day) => {
           const dayItems = (fullDay.get(day) ?? []).filter((item) => matchesAnyBoostTag(item, boosts));
-          const tileEntries = buildCalendarTileEntries(dayItems);
-          const topFive = tileEntries.slice(0, 5);
+          const tileEntries = applyPreferenceOrdering(buildCalendarTileEntries(dayItems), preferences);
+          const topTwelve = tileEntries.slice(0, 12);
           const dateBlock = formatDateBlock(day);
 
-          if (topFive.length === 0) {
+          if (topTwelve.length === 0) {
             return null;
           }
 
@@ -172,25 +201,35 @@ export function CalendarView({ dataset }: CalendarViewProps) {
                 </Link>
               </div>
               <div className="day-strip">
-                {topFive.map((entry) => (
-                  <Link key={entry.key} href={`/films/${entry.item.film.slug}`} className="day-tile">
-                    <div className="day-tile-image-wrap">
-                      {entry.item.film.posterUrl ? (
-                        <img src={entry.item.film.posterUrl} alt={entry.item.film.canonicalTitle} className="day-tile-image" />
-                      ) : (
-                        <div className="day-tile-image placeholder">No image</div>
-                      )}
+                {topTwelve.map((entry) => (
+                  <article key={entry.key} className="day-tile">
+                    <Link href={`/films/${entry.item.film.slug}`} className="day-tile-link">
+                      <div className="day-tile-image-wrap">
+                        {entry.item.film.posterUrl ? (
+                          <img src={entry.item.film.posterUrl} alt={entry.item.film.canonicalTitle} className="day-tile-image" />
+                        ) : (
+                          <div className="day-tile-image placeholder">No image</div>
+                        )}
+                      </div>
+                      <div className="day-tile-body">
+                        <p className="day-tile-title">{entry.item.film.canonicalTitle}</p>
+                        <p className="day-tile-meta">
+                          {entry.item.venue.name} · {entry.showtimes.join(", ")}
+                        </p>
+                        {entry.tags.length > 0 ? <p className="day-tile-tags">{entry.tags.slice(0, 3).join(" · ")}</p> : null}
+                      </div>
+                    </Link>
+                    <div className="tile-vote-row">
+                      <button type="button" className="tile-vote-button" onClick={() => onVote(entry.item.film.id, "up")}>
+                        👍
+                      </button>
+                      <button type="button" className="tile-vote-button" onClick={() => onVote(entry.item.film.id, "down")}>
+                        👎
+                      </button>
                     </div>
-                    <div className="day-tile-body">
-                      <p className="day-tile-title">{entry.item.film.canonicalTitle}</p>
-                      <p className="day-tile-meta">
-                        {entry.item.venue.name} · {entry.showtimes.join(", ")}
-                      </p>
-                      {entry.tags.length > 0 ? <p className="day-tile-tags">{entry.tags.slice(0, 3).join(" · ")}</p> : null}
-                    </div>
-                  </Link>
+                  </article>
                 ))}
-                {tileEntries.length > 5 ? (
+                {tileEntries.length > 12 ? (
                   <Link href={`/calendar/${day}`} className="day-more-button">
                     More
                   </Link>
