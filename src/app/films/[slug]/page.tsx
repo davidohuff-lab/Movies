@@ -14,10 +14,21 @@ export default async function FilmPage({ params }: { params: { slug: string } })
   }
 
   const screenings = dataset.screenings.filter((screening) => screening.filmId === film.id);
+  const sortedScreenings = [...screenings].sort(
+    (left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
+  );
   const primaryScreening = screenings[0];
   const venue = primaryScreening
     ? dataset.venues.find((candidate) => candidate.id === primaryScreening.venueId)!
     : null;
+  const primaryVenueName = venue?.name ?? "Venue unknown";
+  const venueNames = Array.from(
+    new Set(
+      sortedScreenings
+        .map((screening) => dataset.venues.find((candidate) => candidate.id === screening.venueId)?.name)
+        .filter((name): name is string => Boolean(name))
+    )
+  );
   const summary =
     primaryScreening && venue
       ? getThreeSentenceSummary({
@@ -35,7 +46,17 @@ export default async function FilmPage({ params }: { params: { slug: string } })
     <div className="page-stack">
       <section className="panel">
         <p className="eyebrow">Film detail</p>
-        <h1>{film.canonicalTitle}</h1>
+        <h1>
+          {film.canonicalTitle} · {primaryVenueName}
+        </h1>
+        {primaryScreening?.sourceUrl ? (
+          <p>
+            <a href={primaryScreening.sourceUrl} target="_blank" rel="noreferrer" className="detail-link">
+              Theater page with film
+            </a>
+          </p>
+        ) : null}
+        {venueNames.length > 1 ? <p className="muted">Also playing at: {venueNames.slice(1).join(", ")}</p> : null}
         <p>
           {film.releaseYear ?? "Year unknown"} · {film.runtimeMinutes ?? "?"} min ·{" "}
           {film.directors.length > 0 ? film.directors.join(", ") : "Director unknown"}
@@ -45,7 +66,7 @@ export default async function FilmPage({ params }: { params: { slug: string } })
       <section className="panel">
         <h2>Screenings</h2>
         <div className="card-list">
-          {screenings.map((screening) => {
+          {sortedScreenings.map((screening) => {
             const screeningVenue = dataset.venues.find((candidate) => candidate.id === screening.venueId)!;
             return (
               <article key={screening.id} className="screening-card static">
@@ -53,6 +74,13 @@ export default async function FilmPage({ params }: { params: { slug: string } })
                 <p>
                   {formatCalendarDate(new Date(screening.startAt))} at {formatClock(new Date(screening.startAt))}
                 </p>
+                {screening.sourceUrl ? (
+                  <p>
+                    <a href={screening.sourceUrl} target="_blank" rel="noreferrer" className="detail-link">
+                      Theater page with film
+                    </a>
+                  </p>
+                ) : null}
                 <p className="reason">{screening.descriptionRaw}</p>
               </article>
             );
