@@ -3,9 +3,6 @@ const nextConfig = {
   experimental: {
     typedRoutes: false
   },
-  outputFileTracingIncludes: {
-    "/*": ["./public/data/screenings-latest.json"]
-  },
   images: {
     remotePatterns: [
       {
