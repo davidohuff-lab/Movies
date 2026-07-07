@@ -4,3 +4,5 @@ node_modules
 coverage
 dist
 .vercel
+.DS_Store
+tsconfig.tsbuildinfo

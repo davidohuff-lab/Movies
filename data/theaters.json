@@ -1,0 +1,198 @@
+[
+  {
+    "id": "film-forum",
+    "name": "Film Forum",
+    "address": "209 W Houston St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "ifc-center",
+    "name": "IFC Center",
+    "address": "323 6th Ave, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "quad-cinema",
+    "name": "Quad Cinema",
+    "address": "34 W 13th St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "angelika-film-center",
+    "name": "Angelika Film Center",
+    "address": "18 W Houston St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "village-east-by-angelika",
+    "name": "Village East by Angelika",
+    "address": "181-189 2nd Ave, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "cinema-123-by-angelika",
+    "name": "Cinema 123 by Angelika",
+    "address": "1001 3rd Ave, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "metrograph",
+    "name": "Metrograph",
+    "address": "7 Ludlow St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "anthology-film-archives",
+    "name": "Anthology Film Archives",
+    "address": "32 2nd Ave, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "cinema-village",
+    "name": "Cinema Village",
+    "address": "22 E 12th St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "film-noir-cinema",
+    "name": "Film Noir Cinema",
+    "address": "122 Meserole Ave, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "roxy-cinema-new-york",
+    "name": "Roxy Cinema New York",
+    "address": "2 6th Ave, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "film-at-lincoln-center",
+    "name": "Film at Lincoln Center",
+    "address": "144 W 65th St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "paris-theater",
+    "name": "Paris Theater",
+    "address": "4 W 58th St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "firehouse-dctv",
+    "name": "Firehouse: DCTV’s Cinema for Documentary Film",
+    "address": "87 Lafayette St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "bam-rose-cinemas",
+    "name": "BAM Rose Cinemas",
+    "address": "30 Lafayette Ave, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "nitehawk-cinema-williamsburg",
+    "name": "Nitehawk Cinema Williamsburg",
+    "address": "136 Metropolitan Ave, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "nitehawk-cinema-prospect-park",
+    "name": "Nitehawk Cinema Prospect Park",
+    "address": "188 Prospect Park West, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "spectacle-theater",
+    "name": "Spectacle Theater",
+    "address": "124 S 3rd St, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "light-industry",
+    "name": "Light Industry",
+    "address": "155 Freeman St, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "e-flux-screening-room",
+    "name": "e-flux Screening Room",
+    "address": "172 Classon Ave, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "millennium-film-workshop",
+    "name": "Millennium Film Workshop",
+    "address": "167 Wilson Ave, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "syndicated",
+    "name": "Syndicated",
+    "address": "40 Bogart St, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "maysles-documentary-center",
+    "name": "Maysles Documentary Center",
+    "address": "343 Malcolm X Blvd, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "museum-of-the-moving-image",
+    "name": "Museum of the Moving Image",
+    "address": "36-01 35th Ave, Astoria, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "low-cinema",
+    "name": "Low Cinema",
+    "address": "188 Loisaida Ave, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "moma-film-screenings",
+    "name": "MoMA Film Screenings",
+    "address": "11 W 53rd St, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "amc-13-imax",
+    "name": "AMC 13 (IMAX)",
+    "address": "1998 Broadway, New York, NY",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "id": "alamo-drafthouse",
+    "name": "Alamo Drafthouse",
+    "address": "445 Albee Square W, Brooklyn, NY",
+    "lat": null,
+    "lng": null
+  }
+]

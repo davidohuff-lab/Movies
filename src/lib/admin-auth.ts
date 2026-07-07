@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 const ADMIN_COOKIE = "projection-room";
 
 export function isAdminAuthenticated(): boolean {
-  return cookies().get(ADMIN_COOKIE)?.value === "1";
+  return isAdminCookieAuthorized(cookies().get(ADMIN_COOKIE)?.value);
 }
 
 export function getAdminSecret(): string {
@@ -12,4 +12,8 @@ export function getAdminSecret(): string {
 
 export function getAdminCookieName(): string {
   return ADMIN_COOKIE;
+}
+
+export function isAdminCookieAuthorized(value: string | undefined): boolean {
+  return value === "1";
 }

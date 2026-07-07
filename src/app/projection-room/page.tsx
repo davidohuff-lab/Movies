@@ -2,7 +2,7 @@ import { AdminConsole } from "@/components/admin-console";
 import { AdminGate } from "@/components/admin-gate";
 import { getRegisteredAdapters, getVenueHealth } from "@/lib/adapters/registry";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { getPublicDataset } from "@/lib/repository";
+import { getDatasetCacheStatus, getPublicDataset } from "@/lib/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,7 @@ export default async function ProjectionRoomPage() {
   }
 
   const dataset = await getPublicDataset();
+  const cacheStatus = getDatasetCacheStatus();
   const activeHealth = await Promise.all(
     dataset.venues
       .filter((venue) => getRegisteredAdapters().some((adapter) => adapter.canHandle(venue)))
@@ -28,5 +29,5 @@ export default async function ProjectionRoomPage() {
 
   const adapters = getRegisteredAdapters().map((adapter) => ({ key: adapter.key, lane: adapter.lane }));
 
-  return <AdminConsole dataset={dataset} health={activeHealth} adapters={adapters} />;
+  return <AdminConsole dataset={dataset} health={activeHealth} adapters={adapters} cacheStatus={cacheStatus} />;
 }

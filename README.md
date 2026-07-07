@@ -1,4 +1,4 @@
-# Repertory Signal
+# Screen Ritual
 
 NYC repertory / arthouse movie showtimes for a single user, with transparent ranking, travel-time heuristics, a monthly calendar, and a hidden admin mode.
 

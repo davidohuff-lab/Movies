@@ -56,7 +56,7 @@ export const curatedVenues: Venue[] = [
     id: "venue-angelika-film-center",
     name: "Angelika Film Center",
     slug: "angelika-film-center",
-    website: "https://www.angelikafilmcenter.com/nyc",
+    website: "https://angelikafilmcenter.com/nyc/now-playing",
     address: "18 W Houston St, New York, NY",
     borough: "Manhattan",
     lat: 40.7278,
@@ -72,7 +72,7 @@ export const curatedVenues: Venue[] = [
     id: "venue-village-east",
     name: "Village East by Angelika",
     slug: "village-east-by-angelika",
-    website: "https://www.angelikafilmcenter.com/villageeast/signature-programming",
+    website: "https://angelikafilmcenter.com/villageeast/now-playing",
     address: "181-189 2nd Ave, New York, NY",
     borough: "Manhattan",
     lat: 40.7309,
@@ -83,6 +83,22 @@ export const curatedVenues: Venue[] = [
     adapterType: "event_page",
     includeRules: ["signature-programming-only"],
     tags: [makeVenueTag("Village East by Angelika")]
+  },
+  {
+    id: "venue-cinema-123",
+    name: "Cinema 123 by Angelika",
+    slug: "cinema-123-by-angelika",
+    website: "https://angelikafilmcenter.com/cinemas123/now-playing",
+    address: "1001 3rd Ave, New York, NY",
+    borough: "Manhattan",
+    lat: 40.7613,
+    lng: -73.9659,
+    neighborhood: "Upper East Side",
+    nearestSubwayStops: ["Lexington Av/63 St", "59 St"],
+    active: true,
+    adapterType: "api",
+    includeRules: ["specialty-only"],
+    tags: [makeVenueTag("Cinema 123 by Angelika")]
   },
   {
     id: "venue-metrograph",
@@ -179,7 +195,7 @@ export const curatedVenues: Venue[] = [
     id: "venue-paris-theater",
     name: "Paris Theater",
     slug: "paris-theater",
-    website: "https://paristheaternyc.com",
+    website: "https://www.paristheaternyc.com/special-engagements",
     address: "4 W 58th St, New York, NY",
     borough: "Manhattan",
     lat: 40.7645,
@@ -392,9 +408,9 @@ export const curatedVenues: Venue[] = [
   },
   {
     id: "venue-amc-lincoln-square",
-    name: "AMC Lincoln Square 13",
+    name: "AMC 13 (IMAX)",
     slug: "amc-lincoln-square-13",
-    website: "https://www.amctheatres.com/movie-theatres/new-york-city/amc-lincoln-square-13",
+    website: "https://www.imax.com/theatre/amc-lincoln-square-13-imax",
     address: "1998 Broadway, New York, NY",
     borough: "Manhattan",
     lat: 40.774,
@@ -404,7 +420,7 @@ export const curatedVenues: Venue[] = [
     active: true,
     adapterType: "structured_html",
     includeRules: ["imax-only", "special-events-only"],
-    tags: [makeVenueTag("AMC Lincoln Square 13")]
+    tags: [makeVenueTag("AMC 13 (IMAX)")]
   },
   {
     id: "venue-alamo-drafthouse",

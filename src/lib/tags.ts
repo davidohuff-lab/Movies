@@ -11,7 +11,12 @@ export const FIRST_CLASS_TAGS = [
   "Kung Fu",
   "Korean",
   "Criterion Collection",
-  "New Release"
+  "New Release",
+  "Documentary",
+  "Animation",
+  "Restoration",
+  "Premiere",
+  "Retrospective"
 ] as const;
 
 export function buildBaseTags(venues: Venue[]): Tag[] {
@@ -22,9 +27,9 @@ export function buildBaseTags(venues: Venue[]): Tag[] {
     type:
       name === "35MM" || name === "70MM"
         ? "format"
-        : name === "Special Event/Talkback"
+        : name === "Special Event/Talkback" || name === "Restoration" || name === "Premiere" || name === "Retrospective"
           ? "program"
-          : "genre",
+        : "genre",
     active: true
   }));
 
@@ -57,6 +62,12 @@ export function inferTagsFromFilm(film: Film): string[] {
   if (/\bmartial|kung fu|bruce lee\b/.test(synopsis)) {
     tags.push("Kung Fu");
   }
+  if (/\bdocumentary|nonfiction|docu-?mentary\b/.test(synopsis)) {
+    tags.push("Documentary");
+  }
+  if (/\banimation|animated|anime|stop-motion\b/.test(synopsis)) {
+    tags.push("Animation");
+  }
   if (/\bhaunted|delirious|visionary|avant-garde|surreal\b/.test(synopsis)) {
     tags.push("Psychedelic");
   }
@@ -82,6 +93,21 @@ export function inferTagsFromText(text: string): string[] {
   }
   if (source.includes("cult")) {
     tags.push("Cult Classic");
+  }
+  if (/\bdocumentary|nonfiction|doc program|docs?\b/.test(source)) {
+    tags.push("Documentary");
+  }
+  if (/\banimation|animated|anime|shorts animation\b/.test(source)) {
+    tags.push("Animation");
+  }
+  if (/\brestoration|restored|4k restoration|new restoration|restored print\b/.test(source)) {
+    tags.push("Restoration");
+  }
+  if (/\bpremiere|opening night|early access|sneak preview|first look\b/.test(source)) {
+    tags.push("Premiere");
+  }
+  if (/\bretrospective|career-spanning|complete films?|spotlight on|focus on\b/.test(source)) {
+    tags.push("Retrospective");
   }
 
   return unique(tags);

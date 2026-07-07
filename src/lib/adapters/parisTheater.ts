@@ -8,7 +8,7 @@ import {
   toAbsoluteUrl
 } from "@/lib/utils";
 
-const PARIS_THEATER_URL = "https://www.paristheaternyc.com/";
+const PARIS_THEATER_URL = "https://www.paristheaternyc.com/special-engagements";
 
 function decodeJsonish(input: string): string {
   return collapseWhitespace(
@@ -22,6 +22,7 @@ function decodeJsonish(input: string): string {
 }
 
 export function parseParisTheaterHomepageHtml(payload: string) {
+  const normalizedPayload = payload.replace(/\\"/g, "\"");
   const filmMetadata = new Map<
     string,
     {
@@ -36,7 +37,7 @@ export function parseParisTheaterHomepageHtml(payload: string) {
     }
   >();
 
-  for (const filmMatch of payload.matchAll(
+  for (const filmMatch of normalizedPayload.matchAll(
     /"FilmName":"([^"]+)","Slug":"([^"]+)".*?"Director":"([^"]*)".*?"Synopsis":"([^"]*)".*?"Runtime":(null|\d+).*?"FilmFormat":"([^"]*)".*?"Year":"(\d{4})"/g
   )) {
     const title = decodeJsonish(filmMatch[1]);
@@ -58,7 +59,7 @@ export function parseParisTheaterHomepageHtml(payload: string) {
   }
 
   return Array.from(
-    payload.matchAll(
+    normalizedPayload.matchAll(
       /"EventName":"([^"]+)","EventDate":"(\d{4}-\d{2}-\d{2})","HeroDetails":"([^"]*)".*?"TicketLink":"([^"]+)".*?"Slug":"([^"]+)".*?"EventTime":"([^"]+)"/g
     )
   ).map((eventMatch) => {
@@ -89,7 +90,7 @@ export function parseParisTheaterHomepageHtml(payload: string) {
           canonicalTitle: filmTitle
         } as const)
     };
-  });
+  }).filter((screening) => Boolean(screening.startAt));
 }
 
 export const parisTheaterAdapter: VenueAdapter = {

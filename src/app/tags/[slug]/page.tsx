@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublicDataset } from "@/lib/repository";
 import { formatCalendarDate, formatClock } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
 export default async function TagPage({ params }: { params: { slug: string } }) {
   const dataset = await getPublicDataset();

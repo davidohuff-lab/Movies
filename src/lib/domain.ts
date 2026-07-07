@@ -3,6 +3,7 @@ export type SourceType = "ics" | "html" | "event_page" | "manual" | "api";
 export type TagType = "genre" | "format" | "venue" | "program" | "manual";
 
 export type ThumbValue = "up" | "down";
+export type SourceStatusLevel = "OK" | "CACHED" | "FAILED";
 
 export type AdapterLane = "ics" | "structured_html" | "event_page" | "headless" | "manual";
 
@@ -113,12 +114,24 @@ export interface PublicDataset {
   generatedAt: string;
   dataMode?: "fixture" | "live";
   dataStatusMessage?: string;
+  sourceStatuses?: SourceStatus[];
   venues: Venue[];
   films: Film[];
   screenings: Screening[];
   tags: Tag[];
   screeningTags: ScreeningTag[];
   curatedVenueCount: number;
+}
+
+export interface SourceStatus {
+  venueId: string;
+  venueName: string;
+  status: SourceStatusLevel;
+  lastSuccessfulUpdate?: string;
+  lastAttemptAt?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  hint?: string;
 }
 
 export interface SearchFilters {

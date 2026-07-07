@@ -1,5 +1,5 @@
 {
-  "name": "nyc-repertory-showtimes",
+  "name": "screen-ritual",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --import tsx --test src/tests/**/*.test.ts",
+    "build:snapshot": "node --import tsx scripts/build-static-snapshot.ts",
+    "build:nearby:8": "node --import tsx scripts/build_nearby_places.ts --walk=8",
+    "build:nearby:5": "node --import tsx scripts/build_nearby_places.ts --walk=5",
+    "build:nearby:metrograph": "node --import tsx scripts/build_nearby_places.ts --theater=metrograph --walk=8",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

@@ -49,10 +49,6 @@ function extractIfcMetadata(payload: string, sourceUrl: string) {
   };
 }
 
-function isIfcWidgetPlaceholder(description: string) {
-  return /listed on ifc center's home showtimes widget\.?/i.test(collapseWhitespace(description));
-}
-
 function mergeIfcHomeScreeningsWithFilmMetadata(
   homeScreenings: ReturnType<typeof parseIfcHomeWidgetHtml>,
   metadataByUrl: Map<string, ReturnType<typeof extractIfcMetadata>>
@@ -65,7 +61,7 @@ function mergeIfcHomeScreeningsWithFilmMetadata(
 
     return {
       ...draft,
-      description: isIfcWidgetPlaceholder(draft.description) ? metadata.synopsis ?? draft.description : draft.description,
+      description: draft.description,
       film: {
         canonicalTitle: metadata.canonicalTitle || draft.title,
         releaseYear: metadata.releaseYear,
@@ -95,6 +91,20 @@ function extractIfcSpecialEvents(payload: string) {
     }
     events.set(`${dateLabel}|${normalizeClockLabel(normalizeIfcEventTimeLabel(time))}`, caption);
   });
+
+  const inlineMatches = Array.from(
+    payload.matchAll(/<p>[\s\S]*?<span[^>]*>([A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}):<\/span>[\s\S]*?<span[^>]*class="[^"]*ipe-caption[^"]*"[^>]*>([\s\S]*?)<\/span>[\s\S]*?<\/p>/g)
+  );
+  inlineMatches.forEach((match) => {
+    const dateLabel = normalizeIfcDateKey(collapseWhitespace(stripHtml(match[1])));
+    const caption = collapseWhitespace(stripHtml(match[2]));
+    const time = caption.match(/\bat\s+(\d{1,2}(?::\d{2})?(?:\s*[ap]m)?)\b/i)?.[1];
+    if (!time) {
+      return;
+    }
+    events.set(`${dateLabel}|${normalizeClockLabel(normalizeIfcEventTimeLabel(time))}`, caption);
+  });
+
   return events;
 }
 
@@ -131,14 +141,15 @@ export function parseIfcFilmPageHtml(sourceUrl: string, payload: string) {
       return Array.from(match[2].matchAll(/<li><span>([\s\S]*?)<\/span>/g)).map((timeMatch) => {
         const time = collapseWhitespace(stripHtml(timeMatch[1]));
         const specialEventDescription = specialEvents.get(`${normalizedDateLabel}|${normalizeClockLabel(time)}`);
-        const description = specialEventDescription ?? metadata.synopsis ?? "Listed on IFC Center's film page.";
+        const description = specialEventDescription ?? "Listed on IFC Center's film page.";
+        const formatTags = specialEventDescription ? inferTagsFromText(specialEventDescription) : [];
         return {
           title: metadata.canonicalTitle ?? "Unknown IFC title",
           startAt: parseEasternLocalDateTime(date, normalizeClockLabel(time)).toISOString(),
           description,
           sourceUrl,
           rawPayload: `${match[0]} ${specialEventDescription ?? ""}`,
-          formatTags: inferTagsFromText(`${description} ${match[0]}`),
+          formatTags,
           film: metadata
         };
       });
@@ -188,13 +199,14 @@ export function parseIfcHomeWidgetHtml(payload: string, referenceDate = new Date
             const time = collapseWhitespace(stripHtml(timeMatch[1]));
             const specialEventDescription = specialEvents.get(`${normalizedDateLabel}|${normalizeClockLabel(time)}`);
             const description = specialEventDescription ?? "Listed on IFC Center's home showtimes widget.";
+            const formatTags = specialEventDescription ? inferTagsFromText(specialEventDescription) : [];
             return {
               title,
               startAt: parseEasternLocalDateTime(date, normalizeClockLabel(time)).toISOString(),
               description,
               sourceUrl,
               rawPayload: item,
-              formatTags: inferTagsFromText(`${description} ${title} ${item}`)
+              formatTags
             };
           });
         });

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 import { RecommendationResult, UserPreference } from "@/lib/domain";
 import { formatCalendarDate, formatClock } from "@/lib/utils";
@@ -47,7 +48,14 @@ export function FilmDetailDrawer({ item, summary, preferences, onVote, onClose }
       </div>
       {item.film.posterUrl ? (
         <div className="detail-poster-wrap">
-          <img src={item.film.posterUrl} alt={`${item.film.canonicalTitle} poster`} className="detail-poster" />
+          <Image
+            src={item.film.posterUrl}
+            alt={`${item.film.canonicalTitle} poster`}
+            className="detail-poster"
+            width={640}
+            height={960}
+            sizes="(max-width: 768px) 100vw, 360px"
+          />
         </div>
       ) : null}
       <div className="detail-section">

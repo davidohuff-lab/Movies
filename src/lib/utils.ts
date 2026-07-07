@@ -90,6 +90,16 @@ export function formatCalendarDate(date: Date): string {
   }).format(date);
 }
 
+export function formatEasternDateKey(input: Date | string): string {
+  const date = typeof input === "string" ? new Date(input) : input;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
 export function parseLocalDateTime(date: string, time: string): Date {
   return parseEasternLocalDateTime(date, time);
 }

@@ -12,9 +12,17 @@ interface AdminConsoleProps {
   dataset: PublicDataset;
   health: Array<{ venue: string; status: string; count: number; detail: string }>;
   adapters: Array<{ key: string; lane: string }>;
+  cacheStatus: {
+    hasCache: boolean;
+    loadedAt: string | null;
+    ageMinutes: number | null;
+    isRefreshing: boolean;
+    lastRefreshError: string | null;
+    ttlMinutes: number;
+  };
 }
 
-export function AdminConsole({ dataset, health, adapters }: AdminConsoleProps) {
+export function AdminConsole({ dataset, health, adapters, cacheStatus }: AdminConsoleProps) {
   const [overrides, setOverrides] = useState(() => {
     if (typeof window === "undefined") {
       return EMPTY_ADMIN_OVERRIDE;
@@ -34,6 +42,8 @@ export function AdminConsole({ dataset, health, adapters }: AdminConsoleProps) {
     dataset.venues.find((venue) => dataset.screenings.some((screening) => screening.venueId === venue.id))?.slug ?? "ifc-center"
   );
   const [ingestMessage, setIngestMessage] = useState("");
+  const [refreshMessage, setRefreshMessage] = useState("");
+  const [refreshingAll, setRefreshingAll] = useState(false);
   const [manualVenueName, setManualVenueName] = useState("Microcinema Loft");
   const [manualVenueSlug, setManualVenueSlug] = useState("microcinema-loft");
   const [manualVenueBorough, setManualVenueBorough] = useState("Brooklyn");
@@ -129,6 +139,29 @@ export function AdminConsole({ dataset, health, adapters }: AdminConsoleProps) {
     setIngestMessage(response.ok ? `${payload.venue}: ${payload.draftCount} drafts via ${payload.adapter}` : "Unable to re-run ingestion");
   }
 
+  async function refreshAllNow() {
+    setRefreshingAll(true);
+    setRefreshMessage("");
+    try {
+      const response = await fetch("/api/admin/refresh", { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) {
+        setRefreshMessage(payload?.error === "unauthorized" ? "Unauthorized for refresh" : "Unable to refresh all data");
+        return;
+      }
+      const loadedAt = payload?.cache?.loadedAt
+        ? new Date(payload.cache.loadedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+        : "unknown";
+      setRefreshMessage(
+        `Refreshed ${payload.screenings ?? 0} screenings (${payload.venues ?? 0} venues). Cache updated ${loadedAt}.`
+      );
+    } catch {
+      setRefreshMessage("Unable to refresh all data");
+    } finally {
+      setRefreshingAll(false);
+    }
+  }
+
   function addManualVenue() {
     const venue: Venue = {
       id: `manual-venue-${manualVenueSlug}`,
@@ -182,6 +215,22 @@ export function AdminConsole({ dataset, health, adapters }: AdminConsoleProps) {
             </article>
           ))}
         </div>
+        <div className="admin-refresh-row">
+          <button type="button" className="primary-button" disabled={refreshingAll} onClick={refreshAllNow}>
+            {refreshingAll ? "Refreshing..." : "Refresh all data now"}
+          </button>
+          <p className="reason">
+            Cache:{" "}
+            {cacheStatus.loadedAt
+              ? `updated ${new Date(cacheStatus.loadedAt).toLocaleString("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short"
+                })}`
+              : "not loaded"}
+            {" · "}TTL {cacheStatus.ttlMinutes} min
+          </p>
+        </div>
+        {refreshMessage ? <p className="reason">{refreshMessage}</p> : null}
         <div className="table-wrap">
           <table>
             <thead>

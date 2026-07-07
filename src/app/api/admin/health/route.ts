@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getRegisteredAdapters, getVenueHealth } from "@/lib/adapters/registry";
 import { getPublicDataset } from "@/lib/repository";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const dataset = await getPublicDataset();
   const health = await Promise.all(

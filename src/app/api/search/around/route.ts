@@ -4,6 +4,8 @@ import { getDatasetDefaultDate } from "@/lib/dataset-metadata";
 import { getPublicDataset } from "@/lib/repository";
 import { searchAroundTime } from "@/lib/search";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const dataset = await getPublicDataset();
