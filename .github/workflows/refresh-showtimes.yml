@@ -1,0 +1,60 @@
+name: Refresh showtimes
+
+on:
+  schedule:
+    # 07:00 and 08:00 UTC; the gate below only lets the run that lands at 3am New York time through (DST-safe).
+    - cron: "0 7,8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-showtimes
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check New York hour
+        id: gate
+        run: |
+          hour=$(TZ=America/New_York date +%H)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$hour" = "03" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "NY hour is $hour, skipping."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        if: steps.gate.outputs.run == 'true'
+        run: npm ci
+
+      - name: Build snapshot
+        if: steps.gate.outputs.run == 'true'
+        run: npm run build:snapshot
+
+      - name: Commit and push (Vercel deploys on push)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "showtimes-bot"
+          git config user.email "showtimes-bot@users.noreply.github.com"
+          git add public/data/screenings-latest.json
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git commit -m "Refresh live showtime snapshot"
+          git push

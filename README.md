@@ -28,6 +28,10 @@ The runtime now fetches live source pages for the Tier 1 venues where access is 
 3. Run `npm run dev`.
 4. Open `/projection-room` and use `ADMIN_SECRET` to unlock admin mode.
 
+## Daily refresh
+
+`.github/workflows/refresh-showtimes.yml` rebuilds `public/data/screenings-latest.json` at 3am New York time, commits it, and Vercel deploys the push. Run it manually from the Actions tab (workflow_dispatch) or locally with `npm run build:snapshot`.
+
 ## Test
 
 Run:

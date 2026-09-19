@@ -4,7 +4,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function Header() {
+function formatLastUpdated(iso?: string): string | null {
+  if (!iso) {
+    return null;
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York"
+  }).format(date);
+}
+
+export function Header({ generatedAt }: { generatedAt?: string }) {
+  const lastUpdated = formatLastUpdated(generatedAt);
   const pathname = usePathname();
   const isUpcomingActive = pathname === "/" || pathname.startsWith("/films/") || pathname.startsWith("/tags/");
   const isCalendarActive = pathname.startsWith("/calendar");
@@ -25,6 +43,8 @@ export function Header() {
         </Link>
         <p className="brand-subtitle">NYC repertory, arthouse, museum, and specialty-format showtimes</p>
       </div>
+      <div className="header-right">
+      {lastUpdated ? <p className="last-updated">Last Updated: {lastUpdated} ET</p> : null}
       <nav className="main-nav">
         <Link href="/projection-room">Projection Room</Link>
         <Link href="/" className={`ticket-nav-link ${isUpcomingActive ? "active-section" : ""}`.trim()}>
@@ -57,6 +77,7 @@ export function Header() {
         </Link>
         <Link href="/tags/35mm">Tags</Link>
       </nav>
+      </div>
     </header>
   );
 }

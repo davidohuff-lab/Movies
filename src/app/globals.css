@@ -147,6 +147,21 @@ table {
   color: var(--muted);
 }
 
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.last-updated {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .main-nav {
   display: flex;
   gap: 0.4rem;
@@ -1512,6 +1527,17 @@ table {
 
   .calendar-panel > .mobile-home-tabs .mobile-home-tab {
     min-width: 0;
+  }
+
+  .calendar-panel > .mobile-home-tabs,
+  .calendar-panel > .mobile-date-tabs {
+    width: min(56rem, 100%);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .calendar-panel > .mobile-date-tabs {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .calendar-panel > .mobile-home-tabs .mobile-home-tab.active {
